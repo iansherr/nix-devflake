@@ -1,4 +1,4 @@
-# Development Flake
+# Nix DevFlake
 
 ## Overview
 This [Nix flake](https://nixos.wiki/wiki/Flakes) provides reusable development environments and tools for setting up new projects. It can be used independently or integrated with the main system configuration flake.

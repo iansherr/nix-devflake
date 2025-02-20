@@ -2,6 +2,7 @@
 .vscode/
 .devenv/
 *.DS_Store
+.gitignore
 Thumbs.db
 *.vimrc
 *.vim/
