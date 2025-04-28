@@ -155,7 +155,7 @@ cat <<EOF >>flake.nix
 EOF
 ```
 Finish the flake file.
-```bash
+```bash:q:
 cat <<EOF >>flake.nix
         ];
 
@@ -175,8 +175,8 @@ EOF
 
 6. Tell Nix to use the flake.
 ```bash
-echo "use flake ." > .envrc
 direnv allow
+echo "use flake ." > .envrc
 nix flake update
 direnv reload
 ```
