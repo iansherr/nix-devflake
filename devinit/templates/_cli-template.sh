@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# _cli-template.sh
+
 set -eo pipefail
 
 show-help() {
@@ -22,7 +24,9 @@ run-bootstrap() {
   # Create .run if missing
   if [[ ! -f "$dev_root/.run" ]]; then
     echo "Creating .run..."
-    curl -fsSL "https://raw.githubusercontent.com/iansherr/nix-devflake/main/devinit/templates/run-file.sh" -o "$dev_root/.run"
+    load_or_fetch \
+        "../.run.sh" \
+        "https://raw.githubusercontent.com/iansherr/nix-devflake/dev/devinit/templates/run-file.sh"
     chmod +x "$dev_root/.run"
   fi
 
@@ -35,7 +39,9 @@ run-bootstrap() {
   # Create _cli.sh if missing
   if [[ ! -f "$dev_root/scripts/_cli.sh" ]]; then
     echo "Creating _cli.sh..."
-    curl -fsSL "https://raw.githubusercontent.com/iansherr/nix-devflake/main/devinit/templates/_cli-template.sh" -o "$dev_root/scripts/_cli.sh"
+    load_or_fetch \
+        "../scripts/_cli.sh" \
+        "https://raw.githubusercontent.com/iansherr/nix-devflake/dev/devinit/templates/_cli-template.sh"
     chmod +x "$dev_root/scripts/_cli.sh"
   fi
 
@@ -48,24 +54,24 @@ run-doctor() {
   local errors=0
 
   if [[ ! -f "$PWD/.run" ]]; then
-    echo "❌ Missing .run"
+    echo "Missing .run"
     errors=$((errors + 1))
   fi
 
   if [[ ! -f "$PWD/scripts/_cli.sh" ]]; then
-    echo "❌ Missing scripts/_cli.sh"
+    echo "Missing scripts/_cli.sh"
     errors=$((errors + 1))
   fi
 
   if [[ ! -f "$PWD/.envrc" ]]; then
-    echo "❌ Missing .envrc"
+    echo "Missing .envrc"
     errors=$((errors + 1))
   fi
 
   if [[ "$errors" -eq 0 ]]; then
-    echo "✅ All checks passed!"
+    echo "All checks passed!"
   else
-    echo "⚠️ $errors problems found. Run '.run bootstrap' to fix."
+    echo "$errors problems found. Run '.run bootstrap' to fix."
     return 1
   fi
 }
@@ -74,11 +80,11 @@ run-doctor() {
 run-upgrade() {
   echo "🚀 Upgrading .run system..."
 
-  curl -fsSL "https://raw.githubusercontent.com/iansherr/nix-devflake/main/devinit/templates/run-file.sh" -o "$PWD/.run"
-  curl -fsSL "https://raw.githubusercontent.com/iansherr/nix-devflake/main/devinit/templates/_cli-template.sh" -o "$PWD/scripts/_cli.sh"
+  curl -fsSL "https://raw.githubusercontent.com/iansherr/nix-devflake/dev/devinit/templates/run-file.sh" -o "$PWD/.run"
+  curl -fsSL "https://raw.githubusercontent.com/iansherr/nix-devflake/dev/devinit/templates/_cli-template.sh" -o "$PWD/scripts/_cli.sh"
 
   chmod +x "$PWD/.run"
   chmod +x "$PWD/scripts/_cli.sh"
 
-  echo "✅ Upgrade complete!"
+  echo "Upgrade complete!"
 }

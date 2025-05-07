@@ -1,50 +1,5 @@
-#!/usr/bin/env bash
-# direnv-setup
-set -eo pipefail
-
-# --- Direnv: Configure and reload ---
-
-run_envrc_setup() {
-  echo "🔄 Setting up Direnv..."
-
-  if [[ -f "$PRE_PROJECT_DIR/.envrc" ]]; then
-
-    cd "$NEW_PROJECT_DIR" || exit 1
-
-    direnv allow
-
-    cd "$PRE_PROJECT_DIR" || exit 1
-
-    direnv allow
-
-    nix flake update
-
-    direnv reload
-
-    echo "Direnv configured."
-  else
-    echo ".envrc missing. Skipping direnv allow."
-  fi
-}
-
-create_envrc() {
-  # Create .envrc file
-  if [[ ! -f "$PRE_PROJECT_DIR/.envrc" ]]; then
-    cd $PRE_PROJECT_DIR || exit 1
-    cat <<'EOF' >".envrc"
 # Strict mode
 set -euo pipefail
-
-# Use Nix Flake
-use flake .
-
-# github
-#export GITHUB_ORGANIZATION=
-
-# Only “use flake .” at the top of the repo (RELATIVE_PATH is empty at flake root)
-if [[ -z "${RELATIVE_PATH:-}" ]]; then
-  use flake .
-fi
 
 # Git root detection
 export PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || true)
@@ -94,12 +49,6 @@ elif [[ -d "./devinit/scripts" ]]; then
   PATH_add "./devinit/scripts"
 fi
 
+
 # dotenv support
 # dotenv
-EOF
-  echo "Created .envrc"
-else
-  echo ".envrc already exists. Keeping the existing file."
-fi
-
-}

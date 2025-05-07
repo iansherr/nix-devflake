@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
+# flakegen.sh
 set -euo pipefail
 
 # --- Flakegen: Generate flake.nix based on environment ---
 
-run-flakegen() {
+run_flakegen() {
   # Generate the project-specific flake
-if [[ ! -f "flake.nix" ]]; then
+if [[ ! -f "$PRE_PROJECT_DIR/flake.nix" ]]; then
+  cd "$PRE_PROJECT_DIR" || exit 1
   cat <<EOF >flake.nix
 {
   description = "${PROJECT_NAME} development environment";

@@ -1,96 +1,48 @@
+# bootstrap.sh
 #!/usr/bin/env bash
 set -euo pipefail
 
-# --- Bootstrap: Create essential files (.run, scripts/, _cli.sh, .envrc, .gitignore) ---
 
 run_bootstrap() {
   echo "🔧 Bootstrapping project..."
 
-
-  # Default devinit directory
-  DEVELOPMENT_DIR=".devenv/devinit"
-
-  # Detect if running inside .devenv/devinit or project root
-  if [[ "$SCRIPT_DIR" =~ .*/$DEVELOPMENT_DIR$ ]]; then
-    # Running from within .devenv/devinit, set project directory to its parent
-    PRE_PROJECT_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
-  else
-    # Running from the project directory itself
-    PRE_PROJECT_DIR="$PWD"
-
-
-  fi
-
-
-  # Ensure development environment is prepared
-  if [[ -z "${IN_BOOTSTRAP_ENV:-}" ]]; then
-    ensure_development_dir
-  fi
-
-  # Ask whether to create a new project directory
+  # (2) create or pick your new‐project dir:
   while true; do
-    read -rp "Do you want to create a new project directory? (y/N): " CREATE_NEW </dev/tty
-    case "$CREATE_NEW" in
-    [Yy]*)
-      read -rp "Enter new project name: " PROJECT_NAME
-      [[ -z "$PROJECT_NAME" ]] && {
-        echo "Project name cannot be empty."
-        continue
-      }
-      PROJECT_DIR="${PWD}/${PROJECT_NAME}"
-      mkdir -p "$PROJECT_DIR"
-      break
-      ;;
-    [Nn]* | "")
-      PROJECT_NAME=$(basename "$PWD")
-      mkdir -p "$PROJECT_NAME"
-      PROJECT_DIR="$PWD/$PROJECT_NAME"
-      break
-      ;;
-    *)
-      echo "Invalid input. Please enter 'y' or 'n'."
-      ;;
+    read -rp "Create a new name for project directory? (y/N): " yn </dev/tty
+    case "$yn" in
+      [Yy]*)
+        read -rp "Name: " PROJECT_NAME </dev/tty
+        [[ -z $PROJECT_NAME ]] && continue
+        NEW_PROJECT_DIR="$PWD/$PROJECT_NAME"
+        mkdir -p "$NEW_PROJECT_DIR"
+        break
+        ;;
+      *)  # default = current dir
+        PROJECT_NAME=$(basename "$PWD")
+        NEW_PROJECT_DIR="$PWD/$PROJECT_NAME"
+        mkdir -p "$NEW_PROJECT_DIR"
+        break
+        ;;
     esac
   done
 
+  # (3) Ensure your scripts dir exists in the source tree
+  mkdir -p "$PRE_PROJECT_DIR/scripts"
 
-  local dev_root="$PWD"
+  # (4) Idempotently install the two launchers via install_template:
+  install_template ".run"             "$REMOTE_BASE/templates/run-file.sh"
+  install_template "scripts/_cli.sh"  "$REMOTE_BASE/templates/_cli-template.sh"
 
-  # Create .run if missing
-  if [[ ! -f "$PRE_PROJECT_DIR/.run" ]]; then
-    echo "Creating .run..."
-    curl -fsSL "https://raw.githubusercontent.com/iansherr/nix-devflake/main/devinit/templates/run-file.sh" -o "$PRE_PROJECT_DIR/.run"
-    chmod +x "$PRE_PROJECT_DIR/.run"
-  fi
+  # (5) And generate your envrc in the source tree:
+  install_template ".envrc"           "$REMOTE_BASE/templates/envrc_template.sh"
 
-  # Create scripts/ folder if missing
-  if [[ ! -d "$PRE_PROJECT_DIR/scripts" ]]; then
-    echo "Creating scripts/..."
-    mkdir "$PRE_PROJECT_DIR/scripts"
-  fi
-
-  # Create _cli.sh if missing
-  if [[ ! -f "$PRE_PROJECT_DIR/scripts/_cli.sh" ]]; then
-    echo "Creating _cli.sh..."
-    curl -fsSL "https://raw.githubusercontent.com/iansherr/nix-devflake/main/devinit/templates/_cli-template.sh" -o "$PRE_PROJECT_DIR/scripts/_cli.sh"
-    chmod +x "$PRE_PROJECT_DIR/scripts/_cli.sh"
-  fi
-
-  # Create .envrc if missing
-  if [[ ! -f "$PRE_PROJECT_DIR/.envrc" ]]; then
-    echo "Creating .envrc..."
-    create_envrc
-
-  echo "Bootstrap complete! Run 'direnv allow' if needed."
-  fi
+  echo "Bootstrap done! → cd $NEW_PROJECT_DIR && direnv allow"
 }
-
-
 
 
 ensure_development_dir() {
   # Define where the flake should be located
-  local dev_dir="${PRE_PROJECT_DIR}/${DEVELOPMENT_DIR}"
+  local dev_dir="$HELPER_ROOT"
 
   # Ensure Nix is installed
   if ! command -v nix &>/dev/null; then
@@ -122,60 +74,15 @@ ensure_development_dir() {
   # Prevent infinite recursion
   if [[ -z "${IN_BOOTSTRAP_ENV:-}" ]]; then
     export IN_BOOTSTRAP_ENV=1
-    exec env IN_BOOTSTRAP_ENV=1 nix develop --no-write-lock-file "github:iansherr/nix-devflake?dir=devinit#bootstrap" --command bash <<EOF
-$(curl -fsSL "https://raw.githubusercontent.com/iansherr/nix-devflake/main/devinit/project-init.sh")
+    # also export FETCH and HELPER_ROOT so the nested script “remembers”
+    exec env \
+      IN_BOOTSTRAP_ENV=1 \
+      FETCH="$FETCH" \
+      HELPER_ROOT="$HELPER_ROOT" \
+      nix develop --no-write-lock-file "github:iansherr/nix-devflake?dir=devinit#bootstrap" \
+      --command bash <<EOF
+  $(curl -fsSL "https://raw.githubusercontent.com/iansherr/nix-devflake/dev/devinit/project-init.sh")
 EOF
-  fi
-
-  # Ensure .devenv directory exists
-  mkdir -p "$dev_dir"
-
-  # Ensure flake.nix exists or prompt the user
-  if [[ ! -f "${dev_dir}/flake.nix" ]]; then
-    echo "Error: flake.nix not found at ${dev_dir}/flake.nix"
-    echo "Would you like to:"
-    echo "1) Use the remote flake dynamically (without cloning)"
-    echo "2) Clone the default flake from GitHub (iansherr/nix-devflake/devinit)"
-    echo "3) Specify an existing directory containing the flake"
-    echo "4) Exit"
-
-    read -rp "Choose an option [1/2/3/4]: " choice
-
-    case "$choice" in
-    1)
-      echo "Using remote flake dynamically..."
-      REMOTE_FLAKE="github:iansherr/nix-devflake?dir=devinit"
-      exec nix develop --no-write-lock-file "${REMOTE_FLAKE}#bootstrap" --command bash "$0" "$@"
-      ;;
-    2)
-      echo "Cloning flake from GitHub..."
-      git clone --depth=1 https://github.com/iansherr/nix-devflake "${dev_dir}"
-      ;;
-    3)
-      read -rp "Enter the path to an existing flake directory: " CUSTOM_FLAKE_DIR
-      if [[ -d "$CUSTOM_FLAKE_DIR" && -f "$CUSTOM_FLAKE_DIR/flake.nix" ]]; then
-        dev_dir="$CUSTOM_FLAKE_DIR"
-      else
-        echo "Invalid directory. Exiting."
-        exit 1
-      fi
-      ;;
-    4)
-      echo "Exiting."
-      exit 1
-      ;;
-    *)
-      echo "Invalid choice. Exiting."
-      exit 1
-      ;;
-    esac
-  fi
-
-  # Enter the local development environment
-  if [[ -z "${IN_BOOTSTRAP_ENV:-}" ]]; then
-    export IN_BOOTSTRAP_ENV=1
-    # Enter the local development environment
-    exec nix develop "${dev_dir}" --command bash -c
   fi
 
 }
@@ -183,15 +90,17 @@ EOF
 
 move_files() {
   # Move all files from the script directory to the project directory
-  echo "Moving files from $SCRIPT_DIR to $PROJECT_DIR..."
-  find "$SCRIPT_DIR" -mindepth 1 -maxdepth 1 \
-    ! -path "*${SCRIPT_DIR}/.git*" \
-    ! -path "*${SCRIPT_DIR}/.devenv*" \
-    ! -path "*${SCRIPT_DIR}/devinit*" \
+  echo "Moving files from $PRE_PROJECT_DIR to $NEW_PROJECT_DIR..."
+  find "$PRE_PROJECT_DIR" -mindepth 1 -maxdepth 1 \
+    ! -path "*${PRE_PROJECT_DIR}/.git*" \
+    ! -path "*${PRE_PROJECT_DIR}/.devenv*" \
+    ! -path "*${PRE_PROJECT_DIR}/devinit*" \
+    ! -path "*${PRE_PROJECT_DIR}/scripts*" \
     ! -name "project-init.sh" \
+    ! -name ".envrc" \
     ! -name "flake.nix" \
     ! -name "README.md" \
-    -exec mv {} "$PROJECT_DIR" \;
+    -exec mv {} "$NEW_PROJECT_DIR" \;
 }
 
 
@@ -203,14 +112,14 @@ select_valid_environment() {
     read -rp "Enter environment [sscript]: " ENVIRONMENT </dev/tty
     ENVIRONMENT=${ENVIRONMENT:-sscript}
 
-    # Fix input corruption when running from a pipe
-    ENVIRONMENT="$(echo "$ENVIRONMENT" | tr -d '\r' | xargs)"
+  # Fix input corruption when running from a pipe
+  ENVIRONMENT="$(echo "$ENVIRONMENT" | tr -d '\r' | xargs)"
 
-    if [[ " ${VALID_ENVIRONMENTS[*]} " =~ " ${ENVIRONMENT} " ]]; then
-      break
-    else
-      echo "Invalid choice: '$ENVIRONMENT'. Please select from: ${VALID_ENVIRONMENTS[*]}"
-    fi
+  if [[ " ${VALID_ENVIRONMENTS[*]} " =~ " ${ENVIRONMENT} " ]]; then
+    break
+  else
+    echo "Invalid choice: '$ENVIRONMENT'. Please select from: ${VALID_ENVIRONMENTS[*]}"
+  fi
   done
 
 }

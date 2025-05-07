@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
+# git-setup.sh
 set -euo pipefail
 
 # --- Git setup: Initialize repo, set origin ---
 
 pre_commit_setup() {
  # Add a pre-commit configuration
-  if [[ ! -f "${PROJECT_DIR}/.pre-commit-config.yaml" ]]; then
-    cat <<EOF >"${PROJECT_DIR}/.pre-commit-config.yaml"
+  if [[ ! -f "$NEW_PROJECT_DIR/.pre-commit-config.yaml" ]]; then
+    cd $NEW_PROJECT_DIR || exit 1
+    cat <<EOF >".pre-commit-config.yaml"
   repos:
     - repo: https://github.com/pre-commit/pre-commit-hooks
       rev: v4.3.0
@@ -18,7 +20,7 @@ EOF
 
     # Add language-specific pre-commit hooks
     if [ "$ENVIRONMENT" = "python" ]; then
-      cat <<EOF >>"${PROJECT_DIR}/.pre-commit-config.yaml"
+      cat <<EOF >>"$NEW_PROJECT_DIR/.pre-commit-config.yaml"
     - repo: https://github.com/psf/black
       rev: 23.1.0
       hooks:
@@ -37,6 +39,13 @@ EOF
 
 run_git_setup() {
   # Ensure Git is initialized
+  if [[ ! -d "$NEW_PROJECT_DIR/.git" ]]; then
+    echo "Initializing Git repository..."
+    cd $NEW_PROJECT_DIR || exit 1
+  else
+    echo "Git repository already initialized."
+  fi
+
   git init
   git symbolic-ref HEAD refs/heads/main # Ensure main branch exists
   git add .
@@ -100,8 +109,9 @@ run_git_setup() {
 }
 
 create_git_ignore() {
-  if [[ ! -f "${PROJECT_DIR}/.gitignore" ]]; then
-  cat <<EOF >${PROJECT_DIR}/.gitignore
+  if [[ ! -f "$NEW_PROJECT_DIR/.gitignore" ]]; then
+  cd $NEW_PROJECT_DIR || exit 1
+  cat <<EOF >.gitignore
 # Editor and OS-specific files
 .vscode/
 .devenv/
@@ -190,4 +200,29 @@ else
 fi
 
 
+
+
+}
+
+
+
+create_readme() {
+  if [[ ! -f "$NEW_PROJECT_DIR/README.md" ]]; then
+    cd $NEW_PROJECT_DIR || exit 1
+    cat <<EOF >README.md
+# ${PROJECT_NAME}
+This is the README file for ${PROJECT_NAME}.
+## Project Overview
+This project is a ${ENVIRONMENT} development environment.
+## Getting Started
+To get started with this project, follow these steps:
+1. Install the required dependencies.
+2. Set up your environment.
+3. Run the project.
+4. Contribute to the project.
+EOF
+    echo "README.md has been created."
+  else
+    echo "README.md already exists. Keeping the existing file."
+  fi
 }

@@ -2,9 +2,6 @@
 set -eo pipefail
 
 
-#!/usr/bin/env bash
-set -euo pipefail
-
 # --- Find dev root (location of .run) ---
 DEV_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
