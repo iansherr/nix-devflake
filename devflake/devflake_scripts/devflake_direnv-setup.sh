@@ -7,13 +7,13 @@ set -eo pipefail
 run_envrc_setup() {
   echo "🔄 Setting up Direnv..."
 
-  if [[ -f "$PRE_PROJECT_DIR/.envrc" ]]; then
+  if [[ -f "$PROJECT_DIR/.envrc" ]]; then
 
-    cd "$NEW_PROJECT_DIR" || exit 1
+    cd "$PROJECT_DIR" || exit 1
 
     direnv allow
 
-    cd "$PRE_PROJECT_DIR" || exit 1
+    cd "$PROJECT_DIR" || exit 1
 
     direnv allow
 
@@ -29,8 +29,8 @@ run_envrc_setup() {
 
 create_envrc() {
   # Create .envrc file
-  if [[ ! -f "$PRE_PROJECT_DIR/.envrc" ]]; then
-    cd $PRE_PROJECT_DIR || exit 1
+  if [[ ! -f "$PROJECT_DIR/.envrc" ]]; then
+    cd $PROJECT_DIR || exit 1
     cat <<'EOF' >".envrc"
 # Strict mode
 set -euo pipefail
@@ -74,24 +74,6 @@ else
       source "$parent/.envrc"
     fi
   fi
-fi
-
-# Now load your local .run and scripts if present
-if [[ -f "${PROJECT_ROOT:-.}/.run" ]]; then
-  source "${PROJECT_ROOT:-.}/.run"
-elif [[ -f "./.devenv/devinit/.run" ]]; then
-  source "./.devenv/devinit/.run"
-elif [[ -f "./devinit/.run" ]]; then
-  source "./devinit/.run"
-fi
-
-# Add any scripts/ to PATH
-if [[ -d "${PROJECT_ROOT:-.}/scripts" ]]; then
-  PATH_add "${PROJECT_ROOT:-.}/scripts"
-elif [[ -d "./.devenv/devinit/scripts" ]]; then
-  PATH_add "./.devenv/devinit/scripts"
-elif [[ -d "./devinit/scripts" ]]; then
-  PATH_add "./devinit/scripts"
 fi
 
 # dotenv support

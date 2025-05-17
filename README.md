@@ -18,7 +18,7 @@ This [Nix flake](https://nixos.wiki/wiki/Flakes) provides reusable development e
 ### Remote easy install (recommended)
 Inside your project directory, run the following command:
 ```bash
-curl -fsSL "https://raw.githubusercontent.com/iansherr/nix-devflake/main/devinit/project-init.sh" | bash
+curl -fsSL "https://raw.githubusercontent.com/iansherr/nix-devflake/main/devflake/devflake-init.sh" | bash
 ```
 
 ### Easy copy install
@@ -44,7 +44,7 @@ mkdir ~/projects/my-project/.devenv && cp -r ~/nix-devflake/ ~/projects/my-proje
 cd ~/projects/my-project
 ```
 ```bash
-chmod +x ./devenv/devinit/project-init.sh  ./.devenv/devinit/project-init.sh
+chmod +x ./devenv/devflake/devflake-init.sh  ./.devenv/devflake/devflake-init.sh
 ```
 
 5. Follow the prompts.
@@ -59,7 +59,7 @@ cd ~/projects/my-project
 
 2. Check if the required files exist:
 ```bash
-ls .devenv/devinit/flake.nix .devenv/devinit/project-init.sh
+ls .devenv/devflake/flake.nix .devenv/devflake/devflake-init.sh
 ```
 If both files exist, continue.
 If they are missing, copy the development flake from your template directory:
@@ -79,12 +79,11 @@ So, you should now have a directory structure like this:
 ```bash
 ~/my-project/
 ├── .devenv/
-│   ├── devinit/
+│   ├── devflake/
 │       ├── flake.nix
-│       ├── project-init.sh
+│       ├── devflake-init.sh
 │       ├── README.md
-├─ my-project
-│  ├── Empty OR Whatever_Project_Files
+├─ Whatever_Project_Files
 ```
 
 5. Create the relevant flake for your project.
@@ -181,12 +180,10 @@ nix flake update
 direnv reload
 ```
 
-7. Move into the project directory.
-```bash
-cd my-project
-```
+7. Don't forget to add devflake to gitignore
+```.gitignore
 
-8. Have fun.
+```
 
 ## License
 This project is licensed under the MIT License.

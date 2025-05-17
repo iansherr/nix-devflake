@@ -6,8 +6,8 @@ set -euo pipefail
 
 pre_commit_setup() {
  # Add a pre-commit configuration
-  if [[ ! -f "$NEW_PROJECT_DIR/.pre-commit-config.yaml" ]]; then
-    cd $NEW_PROJECT_DIR || exit 1
+  if [[ ! -f "$PROJECT_DIR/.pre-commit-config.yaml" ]]; then
+    cd $PROJECT_DIR || exit 1
     cat <<EOF >".pre-commit-config.yaml"
   repos:
     - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -20,7 +20,7 @@ EOF
 
     # Add language-specific pre-commit hooks
     if [ "$ENVIRONMENT" = "python" ]; then
-      cat <<EOF >>"$NEW_PROJECT_DIR/.pre-commit-config.yaml"
+      cat <<EOF >>"$PROJECT_DIR/.pre-commit-config.yaml"
     - repo: https://github.com/psf/black
       rev: 23.1.0
       hooks:
@@ -39,9 +39,9 @@ EOF
 
 run_git_setup() {
   # Ensure Git is initialized
-  if [[ ! -d "$NEW_PROJECT_DIR/.git" ]]; then
+  if [[ ! -d "$PROJECT_DIR/.git" ]]; then
     echo "Initializing Git repository..."
-    cd $NEW_PROJECT_DIR || exit 1
+    cd $PROJECT_DIR || exit 1
   else
     echo "Git repository already initialized."
   fi
@@ -109,12 +109,12 @@ run_git_setup() {
 }
 
 create_git_ignore() {
-  if [[ ! -f "$NEW_PROJECT_DIR/.gitignore" ]]; then
-  cd $NEW_PROJECT_DIR || exit 1
+  if [[ ! -f "$PROJECT_DIR/.gitignore" ]]; then
+  cd $PROJECT_DIR || exit 1
   cat <<EOF >.gitignore
 # Editor and OS-specific files
 .vscode/
-.devenv/
+.devflake/
 *.DS_Store
 Thumbs.db
 *.vimrc
@@ -207,8 +207,8 @@ fi
 
 
 create_readme() {
-  if [[ ! -f "$NEW_PROJECT_DIR/README.md" ]]; then
-    cd $NEW_PROJECT_DIR || exit 1
+  if [[ ! -f "$PROJECT_DIR/README.md" ]]; then
+    cd $PROJECT_DIR || exit 1
     cat <<EOF >README.md
 # ${PROJECT_NAME}
 This is the README file for ${PROJECT_NAME}.

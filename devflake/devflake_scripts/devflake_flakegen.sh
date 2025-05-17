@@ -6,8 +6,8 @@ set -euo pipefail
 
 run_flakegen() {
   # Generate the project-specific flake
-if [[ ! -f "$PRE_PROJECT_DIR/flake.nix" ]]; then
-  cd "$PRE_PROJECT_DIR" || exit 1
+if [[ ! -f "$PROJECT_DIR/flake.nix" ]]; then
+  cd "$PROJECT_DIR" || exit 1
   cat <<EOF >flake.nix
 {
   description = "${PROJECT_NAME} development environment";
@@ -91,10 +91,17 @@ EOF
 
             python310
             python312Full
-            python312Packages.pip
-            pipx
+
             jdk23
             python312Packages.pytest
+
+            # switching to uv
+            uv
+
+            # backwards support for pip and pipx
+            python312Packages.pip
+            pipx
+
 EOF
     ;;
   rust)
