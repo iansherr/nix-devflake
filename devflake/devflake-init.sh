@@ -33,7 +33,7 @@ shopt -s globstar extglob
 
 PROJECT_DIR=$PWD
 GITHUB_URL=https://github.com/iansherr/nix-devflake.git
-REMOTE_BASE=https://raw.githubusercontent.com/iansherr/nix-devflake/main/dev/devflake
+REMOTE_BASE=https://raw.githubusercontent.com/iansherr/nix-devflake/dev/devflake
 
 
 check_helpers_update() {
@@ -132,7 +132,7 @@ if [[ -z "${FETCH:-}" ]]; then
           # copy the *contents* of your local checkout into HELPER_ROOT
           cp -r "$LOCAL_ROOT/"* .devenv/devflake
           FETCH=local-copy
-          HELPER_ROOT=".devenv/devflake/"
+          HELPER_ROOT=".devenv/devflake"
           break
           ;;
         2)
@@ -141,12 +141,23 @@ if [[ -z "${FETCH:-}" ]]; then
           break
           ;;
         3)
-          mkdir -p .devenv/devflake \
-          && git clone --depth=1 --filter=blob:none "$GITHUB_URL" .devenv/devflake \
-          && (cd .devenv/devflake && git sparse-checkout init --cone \
-              && git sparse-checkout set dev/devflake/{devflake_scripts,devflake-init.sh,flake.nix} \
-              && mv dev/devflake/* . && rm -rf dev) \
-          && { FETCH=remote-copy; HELPER_ROOT=.devenv/devflake/; break; } ;;
+          mkdir -p .devenv/ \
+          && git clone "$GITHUB_URL" .devenv/devflake \
+        && (
+             cd .devenv/devflake
+
+
+             # move contents out of the sparse-checkout folder
+             if [[ -d devflake/ ]]; then
+               mv devflake/* ./
+               rm -rf devflake
+               rm -rf .git
+             else
+               echo "unexpected layout: 'devflake' not found" >&2
+               exit 1
+             fi
+          ) \
+        && { FETCH=remote-copy; HELPER_ROOT=".devenv/devflake"; break; } ;;
         4)
           FETCH=remote-stream
           HELPER_ROOT="."
