@@ -25,7 +25,7 @@
 #
 # This script is part of the Nix Devflake project:
 # github.com/iansherr/nix-devflake
-#
+
 
 # Enable strict mode
 set -euo pipefail
