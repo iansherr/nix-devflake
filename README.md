@@ -181,9 +181,7 @@ direnv reload
 ```
 
 7. Don't forget to add devflake to gitignore
-```.gitignore
 
-```
 
 ## License
 This project is licensed under the MIT License.

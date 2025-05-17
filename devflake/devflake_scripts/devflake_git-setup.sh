@@ -174,6 +174,7 @@ env/
 venv/
 
 # Direnv & Shell Environment
+.devenv/
 .direnv/
 .envrc
 
