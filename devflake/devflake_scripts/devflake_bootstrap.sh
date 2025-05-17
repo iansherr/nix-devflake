@@ -44,6 +44,8 @@ ensure_development_dir() {
   local local_flake="$HELPER_ROOT"
   # the canonical “remote” flake
   local remote_flake="github:iansherr/nix-devflake?dir=devflake"
+  local remote_bootstrap="github:iansherr/nix-devflake?dir=devinit#bootstrap"
+
 
   # Prevent infinite recursion
   if [[ -n "${IN_BOOTSTRAP_ENV:-}" ]]; then
@@ -58,14 +60,14 @@ ensure_development_dir() {
       exec nix develop "$local_flake" --command bash "$0" "$@"
       ;;
     local-stream|remote-stream)
-      echo "▶ Streaming from remote devflake ($remote_flake#bootstrap)…"
-      exec nix develop --no-write-lock-file "${remote_flake}#bootstrap" \
-           --command bash <<EOF
-$(curl -fsSL "$REMOTE_BASE/devflake-init.sh")
+      echo "▶ Streaming bootstrap from devinit ($remote_bootstrap)…"
+      exec nix develop --no-write-lock-file "$remote_bootstrap" \
+           --command bash <<\EOF
+  $(curl -fsSL "$REMOTE_BASE/devflake/devflake-init.sh")
 EOF
-      ;;
+    ;;
     *)
-      echo "⚠️  Unknown FETCH mode: $FETCH"
+      echo "⚠Unknown FETCH mode: $FETCH"
       exit 1
       ;;
   esac

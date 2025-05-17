@@ -33,7 +33,7 @@ shopt -s globstar extglob
 
 PROJECT_DIR=$PWD
 GITHUB_URL=https://github.com/iansherr/nix-devflake.git
-REMOTE_BASE=https://raw.githubusercontent.com/iansherr/nix-devflake/main/dev/devflake
+REMOTE_BASE=https://raw.githubusercontent.com/iansherr/nix-devflake/dev/devflake
 
 
 check_helpers_update() {
