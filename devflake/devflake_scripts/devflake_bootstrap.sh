@@ -44,7 +44,11 @@ ensure_development_dir() {
   local local_flake="$HELPER_ROOT"
   # the canonical “remote” flake
   local remote_flake="github:iansherr/nix-devflake?dir=devflake"
+<<<<<<< HEAD
   local remote_bootstrap="github:iansherr/nix-devflake?dir=devinit#bootstrap"
+=======
+  local remote_bootstrap="github:iansherr/nix-devflake?dir=devflake#bootstrap"
+>>>>>>> dev
 
 
   # Prevent infinite recursion
@@ -59,6 +63,7 @@ ensure_development_dir() {
       echo "▶ Entering local devflake at $local_flake"
       exec nix develop "$local_flake" --command bash "$0" "$@"
       ;;
+<<<<<<< HEAD
     local-stream|remote-stream)
       echo "▶ Streaming bootstrap from devinit ($remote_bootstrap)…"
       exec nix develop --no-write-lock-file "$remote_bootstrap" \
@@ -68,10 +73,23 @@ EOF
     ;;
     *)
       echo "⚠Unknown FETCH mode: $FETCH"
+=======
+
+    local-stream)
+      echo "▶ Using local-stream mode; continuing in this shell"
+      # nothing more to do—your scripts have already been loaded via fetch_helper
+      ;;
+
+    remote-stream)
+      echo "▶ Streaming bootstrap from devinit ($remote_bootstrap)…"
+
+    *)
+      echo "⚠ Unknown FETCH mode: $FETCH"
+>>>>>>> dev
       exit 1
       ;;
   esac
-}
+ }
 
 select_valid_environment() {
   VALID_ENVIRONMENTS=("sscript" "python" "web" "rust" "go" "java")
