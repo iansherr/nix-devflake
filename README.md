@@ -1,187 +1,109 @@
 # Nix DevFlake
 
-## Overview
-This [Nix flake](https://nixos.wiki/wiki/Flakes) provides reusable development environments and tools for setting up new projects. It can be used independently or integrated with the main system configuration flake.
+A single, centrally managed Nix flake that provides reusable development shells for your projects—no per-project flake clutter, fully offline capable, and optional AI tooling.
 
 ## Features
-- **Bootstrap Environment**:
-  - Universal shell for initializing projects.
-  - Includes essential tools like `git`, `pre-commit`, and programming language-specific utilities.
-  - Detects whether Nix is installed, and whether flakes are activated.
-- **Reusable Shells**:
-  - Pre-configured environments for Python, Web, Rust, Go, and Java projects.
-- **Project Initialization**:
-  - Automates project directory creation and environment setup using `project-init.sh`.
 
-## Usage
+- **One global devflake** cloned to `~/.local/share/nix-devflake` (or in-repo) on any branch (`main`, `dev`, etc.).
+- **Per-project bootstrap script** (`devflake-init.sh`) that:
+  - Clones or updates your central devflake
+  - (Optionally) creates a project-local copy
+  - Registers a `path://` reference for easy usage
+  - Prompts for your primary environment (Python, Web, Rust, Go, Java, S-script)
+  - Offers optional AI tooling shell
+  - Generates a minimal `.envrc` for direnv
+- **Reusable devShells** defined in `flake.nix`:
+  - `bootstrap`, `default`, `sscript`, `python`, `web`, `rust`, `go`, `java`
+  - AI-augmented variants: `sscript-ai`, `python-ai`, etc.
+- **Offline-first**: once cloned, all shells work without network.
+- **Branchable**: test features on a `dev` branch before merging to `main`.
 
-### Remote easy install (recommended)
-Inside your project directory, run the following command:
-```bash
-curl -fsSL "https://raw.githubusercontent.com/iansherr/nix-devflake/main/devflake/devflake-init.sh" | bash
-```
+---
 
-### Easy copy install
-1. You can copy the init script and flake configuration to a new project directory using the following command:
-Create a new directory in your home that's called nix-devflake.
+## Getting Started
 
-```bash
-mkdir ~/nix-devflake
-```
+### 1. Bootstrapping a project
 
-2. Then copy the development directory to the nixdev directory.
-```bash
-git clone https://github.com/iansherr/nix-devflake ~/nix-devflake
-```
-
-3. Then create a new directory for your project and copy the development directory to the new project directory.
-```bash
-mkdir ~/projects/my-project/.devenv && cp -r ~/nix-devflake/ ~/projects/my-project/.devenv
-```
-
-4. Then navigate to the new project directory and run the initialization script.
-```bash
-cd ~/projects/my-project
-```
-```bash
-chmod +x ./devenv/devflake/devflake-init.sh  ./.devenv/devflake/devflake-init.sh
-```
-
-5. Follow the prompts.
-
-
-
-### Manual install
-1. Make sure you are inside your project folder:
-```bash
-cd ~/projects/my-project
-```
-
-2. Check if the required files exist:
-```bash
-ls .devenv/devflake/flake.nix .devenv/devflake/devflake-init.sh
-```
-If both files exist, continue.
-If they are missing, copy the development flake from your template directory:
-
-3.  Now, enter the Nix bootstrap environment.
-```bash
-nix develop .#bootstrap
-```
-This prepares the shell for the project setup.
-
-4. Create a project subdirectory. This keeps the flake and Nix weirdness out of your git repo.
-```bash
-mkdir my-project
-```
-So, you should now have a directory structure like this:
+Inside your project folder, run:
 
 ```bash
-~/my-project/
-├── .devenv/
-│   ├── devflake/
-│       ├── flake.nix
-│       ├── devflake-init.sh
-│       ├── README.md
-├─ Whatever_Project_Files
+curl -fsSL https://raw.githubusercontent.com/iansherr/nix-devflake/main/devflake-init.sh | bash
 ```
 
-5. Create the relevant flake for your project.
+Or, if you’ve checked out the repo locally:
+
 ```bash
-cat <<EOF >flake.nix
-{
-  description = "${PROJECT_NAME} development environment";
-
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-
-  outputs = { self, nixpkgs }: let
-    # Helper function to iterate over supported systems
-    forEachSystem = f: {
-      x86_64-linux = f "x86_64-linux";
-      x86_64-darwin = f "x86_64-darwin";
-      aarch64-darwin = f "aarch64-darwin";
-      aarch64-linux = f "aarch64-linux";
-      riscv64-linux = f "riscv64-linux";
-    };
-  in {
-    devShells = forEachSystem (system: let
-      pkgs = import nixpkgs {
-        inherit system;
-        config.allowUnfree = true;
-      };
-    in {
-        default = pkgs.mkShell {
-          name = "${ENVIRONMENT}dev";
-          buildInputs = with pkgs; [
-
-            # common
-            git
-            pre-commit
-
-            # neovim and plugins build requirements
-            cmake
-            curl
-
-            zoxide
-            ncurses
-            neovim
-            unzip
-
-            # Needed by plugins
-            fd
-            lazygit
-            jq
-            ripgrep
-            tree-sitter
-            xclip
-
-            # OS
-            bashmount
-
-EOF
-```
-Add relevant extras for your project
-```bash
-cat <<EOF >>flake.nix
-            # Python
-            python3
-            poetry
-            black
-            flake8
-            mypy
-            isort
-            pylint
-EOF
-```
-Finish the flake file.
-```bash:q:
-cat <<EOF >>flake.nix
-        ];
-
-        shellHook = ''
-          echo "${ENVIRONMENT} development environment loaded!"
-          if [ -f .pre-commit-config.yaml ]; then
-            echo "Pre-commit config detected. Installing hooks..."
-            pre-commit install
-          fi
-        '';
-      };
-    });
-  };
-}
-EOF
+bash /path/to/nix-devflake/devflake-init.sh [options]
 ```
 
-6. Tell Nix to use the flake.
+#### CLI options
+
+- `-b, --branch <branch>`
+  : Git branch to clone/use (default: `main`)
+- `-s, --scope <local|project|both>`
+  : Where to install the flake:
+  - `local` (default): only in `~/.local/share/nix-devflake`
+  - `project`: only in `./.nix-devflake`
+  - `both`: install/update in both locations
+
+The script will then:
+
+1. Clone or update the devflake repo.
+2. Prompt for your desired environment.
+3. Optionally include AI tooling.
+4. Generate a `.envrc` with the appropriate `use flake "path://...#<env>"` lines.
+
+### 2. Enter the devShell
+
+After `.envrc` is created, run:
+
 ```bash
 direnv allow
-echo "use flake ." > .envrc
-nix flake update
+```
+
+You’ll see something like:
+
+```
+direnv: using flake path:///home/user/.local/share/nix-devflake#python
+Loaded x86_64-linux:python devShell
+```
+
+To switch to the AI-augmented shell instead, edit or rerun the init script and uncomment:
+
+```bash
+use flake "path:///home/user/.local/share/nix-devflake#python-ai"
+```
+
+### 3. Updating your devflake
+
+When upstream improvements land (new shells, tool upgrades), update your local clone:
+
+```bash
+cd ~/.local/share/nix-devflake
+git pull origin main   # or your branch of choice
+nix flake update       # updates `flake.lock`
+```
+
+Then in your project:
+
+```bash
 direnv reload
 ```
 
-7. Don't forget to add devflake to gitignore
+---
 
+## File Structure
+
+```text
+nix-devflake/
+├── devflake-init.sh    # bootstrap/install script
+├── flake.nix           # defines all devShells
+├── README.md           # this doc
+└── ...
+```
+
+---
 
 ## License
+
 This project is licensed under the MIT License.
