@@ -140,6 +140,95 @@ cat >> .envrc <<EOF
 #   direnv allow
 EOF
 
+# --- Create .gitignore ---
+cat >> .gitignore <<EOF
+
+# Editor and OS-specific files
+.vscode/
+.devenv/
+*.DS_Store
+.gitignore
+Thumbs.db
+*.vimrc
+*.vim/
+*.tmp
+*.swp
+
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pytest_cache/
+.mypy_cache/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Rust
+target/
+Cargo.lock
+
+# Go
+bin/
+pkg/
+*.test
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+*.iml
+.gradle/
+target/
+
+# Nix
+flake.lock
+.result
+*.drv
+result
+result-*
+
+
+# Pre-commit hooks & package manager cache
+.pre-commit-config.yaml
+.pre-commit-hooks.yaml
+.pre-commit-hooks/
+.pip-cache/
+
+# Virtual Environments
+.env
+.venv/
+env/
+venv/
+
+# Direnv & Shell Environment
+.direnv/
+.envrc
+
+# Logs & Temporary Files
+*.log
+*.swp
+*.swo
+*.swn
+*.tmp
+*.bak
+
+# Archives, Compressed and Executable Files
+*.tgz
+*.zip
+*.rar
+*.tar
+*.gz
+*.7z
+*.exe
+EOF
+
+
 #--- Finished ---
 echo "✔ .envrc created for environment: $ENVIRONMENT${INCLUDE_AI:+ + AI}"
 echo "Run 'direnv allow' to enter your project devShell"
