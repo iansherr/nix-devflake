@@ -26,7 +26,7 @@
           default   = [ pkgs.git pkgs.docker pkgs.pre-commit ];
           sscript   = [ pkgs.nano pkgs.lua pkgs.luajit pkgs.yarn ];
           python    = [ pkgs.python310 pkgs.poetry pkgs.black pkgs.isort pkgs.python312Packages.pytest ];
-          web       = [ pkgs.nodejs_23 pkgs.yarn pkgs.prettierd pkgs.nodePackages.prettier pkgs.jdk23 pkgs.python312Packages.pip pkgs.pipx pkgs.python312Packages.pytest pkgs.uv ];
+          web       = [ pkgs.nodejs_24 pkgs.yarn pkgs.prettierd pkgs.nodePackages.prettier pkgs.jdk23 pkgs.python312Packages.pip pkgs.pipx pkgs.python312Packages.pytest pkgs.uv ];
           rust      = [ pkgs.rustc pkgs.cargo pkgs.rust-analyzer pkgs.clippy ];
           go        = [ pkgs.go pkgs.delve pkgs.gopls pkgs.golangci-lint ];
           java      = [ pkgs.maven pkgs.gradle pkgs.eclipse ];
